@@ -8,43 +8,18 @@ import { ThreeAmbientOrb } from './ThreeAmbientOrb';
 import { BirthdayBadges, BirthdayEnvelope, ConstellationCanvas } from './BirthdayEnhancements';
 import { AudioAtmosphere, MidnightNote, PosterMaker } from './BirthdayExtras';
 import { ScrollProgress, TiltEffect, CustomCursor, ParallaxHero, CountUp, RevealText } from './PremiumEnhancements';
-
-export type BirthdayContent = {
-  name: string;
-  wish: string;
-  messages: { from: string; text: string; tone: string; detail?: string }[];
-  moments: { year: string; title: string; note: string; mark: string }[];
-};
-
-/** 生日主体：替换这份内容对象，即可独立更新名字、祝福与墙面文案。 */
-const birthdayContent: BirthdayContent = {
-  name: 'A NEW CHAPTER',
-  wish: '愿18岁的每一次出发，都带着热爱、松弛与勇气。',
-  messages: [
-    { from: 'MOM & DAD', text: '十八岁快乐。愿你永远拥有选择自己生活的底气。', tone: 'tall', detail: '从蹒跚学步到独当一面，你们的骄傲，是他最稳的底气。' },
-    { from: 'BEST FRIEND', text: '新一岁的你，继续闪闪发光，也继续自在做自己。', tone: '', detail: '那些一起熬夜、一起大笑的日子，是青春最亮的注脚。' },
-    { from: 'FAMILY', text: '今天的主角，值得所有温柔的祝福。', tone: '', detail: '团圆饭桌上的笑声，是无论走多远都想回去的方向。' },
-    { from: 'FRIENDS', text: '18，是新的章节；愿每一页都由你亲手写下。', tone: 'wide', detail: '球场上的奔跑、深夜的畅谈，都是十八岁最鲜活的模样。' },
-    { from: 'TO MYSELF', text: '不急着成为谁，先认真感受这一刻的盛大。', tone: '', detail: '不必急着成为谁，先认真感受这一刻的盛大与温柔。' },
-  ],
-  // 可继续补足为 18 个节点；替换年份、标题、文字和标记即可。
-  moments: [
-    { year: '2008', title: 'THE FIRST CHAPTER', note: '故事从一束温柔的光开始。', mark: '01' },
-    { year: '2012', title: 'SMALL STEPS', note: '第一次把好奇心带向更远的地方。', mark: '02' },
-    { year: '2016', title: 'ON THE FIELD', note: '奔跑、热爱，还有属于自己的绿茵时刻。', mark: '03' },
-    { year: '2020', title: 'GROWING QUIETLY', note: '在每一次认真里，慢慢认识自己。', mark: '04' },
-    { year: '2024', title: 'MY OWN RHYTHM', note: '把选择握在手里，把热爱放在心上。', mark: '05' },
-    { year: 'NOW', title: 'CHAPTER EIGHTEEN', note: '今夜，正式走进十八岁的新篇章。', mark: '06' },
-  ],
-};
+import { celebrationContent } from '@/data/celebration';
 
 function AtmosphereCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const canvas = ref.current; if (!canvas) return;
     const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const compact = window.matchMedia('(max-width: 700px)').matches;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let frame = 0; let particles: { x:number; y:number; r:number; s:number; a:number }[] = [];
-    const resize = () => { canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); particles = Array.from({ length: 80 }, () => ({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, r: Math.random()*1.7+.3, s: Math.random()*.32+.06, a: Math.random()*.45+.08 })); };
+    const resize = () => { canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr; ctx.setTransform(dpr,0,0,dpr,0,0); particles = Array.from({ length: compact ? 28 : 64 }, () => ({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, r: Math.random()*1.7+.3, s: Math.random()*.32+.06, a: Math.random()*.45+.08 })); };
     resize(); addEventListener('resize', resize);
     const draw = () => { ctx.clearRect(0,0,innerWidth,innerHeight); particles.forEach((p,i) => { p.y += p.s; p.x += Math.sin(frame/80+i)*.08; if(p.y>innerHeight+6){p.y=-6;p.x=Math.random()*innerWidth;} ctx.beginPath();ctx.fillStyle=`rgba(212,175,55,${p.a})`;ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill(); }); frame++; requestAnimationFrame(draw); };
     const id = requestAnimationFrame(draw); return () => { cancelAnimationFrame(id); removeEventListener('resize',resize); };
@@ -89,12 +64,14 @@ function CakeStage() {
     <div className="night-stadium" aria-hidden="true"><div className="stadium-lights" /><div className="stadium-sweep" /><div className="stadium-seats" /><span>THE NIGHT STADIUM</span></div>
     <div className="night-turf" aria-hidden="true"><i /><i /><i /></div>
     <ThreeAmbientOrb /><div className="stage-glow" /><div className="cake-shadow" />
-    <button className={`cake ${!candles.one && !candles.eight ? 'all-blown' : ''}`} onClick={relight} aria-label={wishState === 'complete' ? '点击重新点燃蜡烛' : '点击蜡烛吹灭许愿'}>
-      <div className={`candle candle-one ${candles.one ? '' : 'blown'}`} onClick={(e) => { e.stopPropagation(); toggleCandle('one'); }}><i /><b>1</b></div><div className={`candle candle-eight ${candles.eight ? '' : 'blown'}`} onClick={(e) => { e.stopPropagation(); toggleCandle('eight'); }}><i /><b>8</b></div>
+    <div className={`cake ${!candles.one && !candles.eight ? 'all-blown' : ''}`}>
+      <button type="button" className={`candle candle-one ${candles.one ? '' : 'blown'}`} onClick={() => toggleCandle('one')} aria-label="吹灭数字 1 蜡烛"><i /><b>1</b></button>
+      <button type="button" className={`candle candle-eight ${candles.eight ? '' : 'blown'}`} onClick={() => toggleCandle('eight')} aria-label="吹灭数字 8 蜡烛"><i /><b>8</b></button>
       <div className="icing" /><div className="cake-top" /><div className="cake-middle" /><div className="cake-base" />
       {wishState === 'ready' && <span className="wish-prompt">点击蜡烛吹灭许愿</span>}
-    </button>
-    {wishState !== 'ready' && <div className="wish-celebration" aria-live="polite"><div className="wish-ring" />{Array.from({length:28},(_,i)=><i key={i} style={{'--x':`${((i*47)%220)-110}px`,'--y':`${-50-((i*73)%220)}px`,'--d':`${(i%7)*.055}s`} as React.CSSProperties} />)}<div className="wish-message"><span>MAKE A WISH</span><strong>{birthdayContent.wish}</strong></div></div>}
+      {wishState === 'complete' && <button type="button" className="relight-candles" onClick={relight}>重新点燃蜡烛</button>}
+    </div>
+    {wishState !== 'ready' && <div className="wish-celebration" aria-live="polite"><div className="wish-ring" />{Array.from({length:28},(_,i)=><i key={i} style={{'--x':`${((i*47)%220)-110}px`,'--y':`${-50-((i*73)%220)}px`,'--d':`${(i%7)*.055}s`} as React.CSSProperties} />)}<div className="wish-message"><span>MAKE A WISH</span><strong>{celebrationContent.wish}</strong></div></div>}
     {wishState === 'complete' && <div className="golden-smoke" aria-hidden="true"><i/><i/><i/><i/></div>}
     {[{x:'7%',y:'30%'},{x:'78%',y:'19%'},{x:'86%',y:'66%'},{x:'-1%',y:'69%'}].map((p,i)=><button key={i} className={`orb orb-${i}`} style={{left:p.x,top:p.y}} onClick={()=>setBurst(i)} aria-label="Celebrate"><span>⬡</span>{burst===i&&<em className="burst">✦ ✦ ✦</em>}</button>)}
   </div>;
@@ -102,9 +79,17 @@ function CakeStage() {
 
 function CollectionModal({ open, onClose }: {open:boolean; onClose:()=>void}) {
   const [photos, setPhotos] = useState<string[]>([]); const [wish,setWish]=useState('');
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
   const addPhotos=(e:ChangeEvent<HTMLInputElement>)=>{const f=Array.from(e.target.files||[]).slice(0,3-photos.length); Promise.all(f.map(x=>new Promise<string>(r=>{const rd=new FileReader();rd.onload=()=>r(String(rd.result));rd.readAsDataURL(x)}))).then(x=>setPhotos(v=>[...v,...x])); e.target.value='';};
   const removePhoto=(index:number)=>setPhotos(v=>v.filter((_,i)=>i!==index));
-  return <AnimatePresence>{open&&<motion.div className="modal-backdrop" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={onClose}><motion.section className="collection-modal" initial={{y:30,opacity:0}} animate={{y:0,opacity:1}} exit={{y:20,opacity:0}} onClick={e=>e.stopPropagation()}><button className="close" onClick={onClose} aria-label="关闭收藏夹"><X size={18}/></button><p className="kicker">PERSONAL ARCHIVE</p><h2>我的足球收藏夹</h2><p className="modal-copy">留住属于自己的球场片段，也写下一句给18岁的期许。</p><div className="polaroids">{[0,1,2].map(i=><div className="polaroid" key={i}>{photos[i]?<><img src={photos[i]} alt={`Personal football memory ${i+1}`}/><button className="remove-photo" onClick={()=>removePhoto(i)} aria-label={`删除第 ${i+1} 张照片`}><Trash2 size={14}/></button></>:<label className="photo-upload"><ImagePlus size={19}/><span>添加照片</span><input type="file" accept="image/*" onChange={addPhotos}/></label>}</div>)}</div><textarea maxLength={80} value={wish} onChange={e=>setWish(e.target.value)} placeholder="写给18岁的自己…"/><div className="signature">— {wish ? 'ME, AT EIGHTEEN' : 'MY SIGNATURE'}</div></motion.section></motion.div>}</AnimatePresence>;
+  return <AnimatePresence>{open&&<motion.div className="modal-backdrop" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={onClose}><motion.section className="collection-modal" initial={{y:30,opacity:0}} animate={{y:0,opacity:1}} exit={{y:20,opacity:0}} onClick={e=>e.stopPropagation()}><button ref={closeButtonRef} className="close" onClick={onClose} aria-label="关闭收藏夹"><X size={18}/></button><p className="kicker">CELEBRATION ARCHIVE</p><h2>我的庆典收藏夹</h2><p className="modal-copy">留住属于自己的珍贵片段，也写下一句给未来的期许。</p><div className="polaroids">{[0,1,2].map(i=><div className="polaroid" key={i}>{photos[i]?<><img src={photos[i]} alt={`庆典记忆照片 ${i+1}`}/><button className="remove-photo" onClick={()=>removePhoto(i)} aria-label={`删除第 ${i+1} 张照片`}><Trash2 size={14}/></button></>:<label className="photo-upload"><ImagePlus size={19}/><span>添加照片</span><input type="file" accept="image/*" onChange={addPhotos}/></label>}</div>)}</div><textarea maxLength={80} value={wish} onChange={e=>setWish(e.target.value)} placeholder="写给未来的自己…"/><div className="signature">— {wish ? 'ME, WITH HOPE' : 'MY SIGNATURE'}</div></motion.section></motion.div>}</AnimatePresence>;
 }
 
 /* =====================================================================
@@ -112,7 +97,7 @@ function CollectionModal({ open, onClose }: {open:boolean; onClose:()=>void}) {
  * 等入场仪式（烟花 2s → siu~ 爱心 5s）走完后由 active 激活淡入。
  * ===================================================================== */
 export function BirthdayExperience({ active = false, enableInterestAccent = true }: { active?: boolean; enableInterestAccent?: boolean }) {
-  const [modal,setModal]=useState(false),[footballClicks,setFootballClicks]=useState(0),[secret,setSecret]=useState(false);
+  const [modal,setModal]=useState(false),[archiveClicks,setArchiveClicks]=useState(0),[secret,setSecret]=useState(false);
   const loaded = active;
   const closingRef=useRef<HTMLElement>(null);
   const closingLit=useInView(closingRef,{once:true,amount:.3});
@@ -122,15 +107,15 @@ export function BirthdayExperience({ active = false, enableInterestAccent = true
     {active && <><ScrollProgress /><TiltEffect /><CustomCursor /><ParallaxHero /></>}
     <div className={`birthday-main ${active?'is-visible':''}`} aria-hidden={!active}>
     <nav className="birthday-nav"><span className="monogram">XVIII</span><span className="birthday-date" aria-label="生日庆典">A NIGHT TO REMEMBER<small>18TH EDITION</small></span><AudioAtmosphere /></nav>
-    <section className="hero-birthday"><div className="hero-copy"><motion.p className="kicker" initial={{opacity:0,y:18}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.15}}>CHAPTER EIGHTEEN</motion.p><motion.h1 initial={{opacity:0,y:28}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.3}}>HAPPY <em><CountUp target={18} duration={1800} delay={500} />TH</em><br/>· {birthdayContent.name}</motion.h1><motion.p className="intro" initial={{opacity:0,y:22}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.5}}>今夜，聚光灯落在你身上。<br/>为成长、热爱与所有值得被庆祝的瞬间举杯。</motion.p><motion.a href="#wishes" className="explore" initial={{opacity:0,y:16}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.7}}>SCROLL TO CELEBRATE <span>↓</span></motion.a></div><motion.div initial={{opacity:0,scale:.88,y:24}} animate={loaded?{opacity:1,scale:1,y:0}:{}} transition={{delay:.45,type:'spring',stiffness:110}}><CakeStage /></motion.div></section>
+    <section className="hero-birthday"><div className="hero-copy"><motion.p className="kicker" initial={{opacity:0,y:18}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.15}}>CHAPTER EIGHTEEN</motion.p><motion.h1 initial={{opacity:0,y:28}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.3}}>HAPPY <em><CountUp target={18} duration={1800} delay={500} />TH</em><br/>· {celebrationContent.name}</motion.h1><motion.p className="intro" initial={{opacity:0,y:22}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.5}}>今夜，聚光灯落在你身上。<br/>为成长、热爱与所有值得被庆祝的瞬间举杯。</motion.p><motion.a href="#wishes" className="explore" initial={{opacity:0,y:16}} animate={loaded?{opacity:1,y:0}:{}} transition={{delay:.7}}>SCROLL TO CELEBRATE <span>↓</span></motion.a></div><motion.div initial={{opacity:0,scale:.88,y:24}} animate={loaded?{opacity:1,scale:1,y:0}:{}} transition={{delay:.45,type:'spring',stiffness:110}}><CakeStage /></motion.div></section>
     <section className="moment-strip"><span>MAKE A WISH</span><i/> <span>LIGHTS ON</span><i/> <span>THE ERA BEGINS</span></section>
-    <section id="wishes" className="wish-section"><div className="section-head"><p className="kicker">WORDS FOR THE NEW CHAPTER</p><h2><RevealText text="祝福，正向你汇聚" /></h2><p>每一句都很珍贵，每一份爱都被好好收藏。</p></div><div className="wish-wall">{birthdayContent.messages.slice(0,2).map((m,i)=><WishCard key={m.from} {...m} delay={i} active={active}/>) }{enableInterestAccent&&<InterestAccent />}{birthdayContent.messages.slice(2).map((m,i)=><WishCard key={m.from} {...m} delay={i+2} active={active}/>)}</div></section>
-    <section className="moments-section" aria-labelledby="moments-title"><div className="moments-heading"><p className="kicker">A SMALL ARCHIVE OF GROWING UP</p><h2 id="moments-title"><RevealText text="成长瞬间 · 先从这里开始" /></h2><p>六个可替换的记忆坐标，留给成长路上的每一次抵达。</p><p className="moments-scroll-hint">横向滑动查看更多 →</p></div><div className="moments-track">{birthdayContent.moments.map((moment, index)=><motion.article className="moment-card" key={moment.mark} initial={{opacity:0,y:22}} animate={active?{opacity:1,y:0}:{}} transition={{delay:.3+index*.07}}><span className="moment-index">{moment.mark}</span><div className="moment-frame"><i>✦</i><b>{moment.year}</b></div><time>{moment.year}</time><h3>{moment.title}</h3><p>{moment.note}</p></motion.article>)}</div></section>
+    <section id="wishes" className="wish-section"><div className="section-head"><p className="kicker">WORDS FOR THE NEW CHAPTER</p><h2><RevealText text="祝福，正向你汇聚" /></h2><p>每一句都很珍贵，每一份爱都被好好收藏。</p></div><div className="wish-wall">{celebrationContent.messages.slice(0,2).map((m,i)=><WishCard key={m.from} {...m} delay={i} active={active}/>) }{enableInterestAccent&&<InterestAccent />}{celebrationContent.messages.slice(2).map((m,i)=><WishCard key={m.from} {...m} delay={i+2} active={active}/>)}</div></section>
+    <section className="moments-section" aria-labelledby="moments-title"><div className="moments-heading"><p className="kicker">A SMALL ARCHIVE OF GROWING UP</p><h2 id="moments-title"><RevealText text="成长瞬间 · 先从这里开始" /></h2><p>六个可替换的记忆坐标，留给成长路上的每一次抵达。</p><p className="moments-scroll-hint">横向滑动查看更多 →</p></div><div className="moments-track">{celebrationContent.moments.map((moment, index)=><motion.article className="moment-card" key={moment.mark} initial={{opacity:0,y:22}} animate={active?{opacity:1,y:0}:{}} transition={{delay:.3+index*.07}}><span className="moment-index">{moment.mark}</span><div className="moment-frame"><i>✦</i><b>{moment.year}</b></div><time>{moment.year}</time><h3>{moment.title}</h3><p>{moment.note}</p></motion.article>)}</div></section>
     <BirthdayEnvelope />
-    <section ref={closingRef} className={`closing${closingLit?' is-lit':''}`}><p className="kicker">A NOTE TO EIGHTEEN</p><blockquote>“{birthdayContent.wish}”</blockquote><PosterMaker wish={birthdayContent.wish}/><div>HAPPY BIRTHDAY · 18</div></section>
+    <section ref={closingRef} className={`closing${closingLit?' is-lit':''}`}><p className="kicker">A NOTE TO EIGHTEEN</p><blockquote>“{celebrationContent.wish}”</blockquote><PosterMaker wish={celebrationContent.wish}/><div>HAPPY BIRTHDAY · 18</div></section>
     <MidnightNote />
     {secret && <div className="seven-secret" aria-live="polite"><span>7</span><small>A SMALL MOMENT, JUST FOR YOU</small></div>}
-    <button className={`football-fab ${modal?'is-open':''}`} onClick={()=>{const next=footballClicks+1;setFootballClicks(next);if(next===7){setSecret(true);window.setTimeout(()=>setSecret(false),3000);setFootballClicks(0);}setModal(true);}} aria-label="打开我的足球收藏夹" data-tooltip="MY ARCHIVE"><Disc3 size={25}/></button><CollectionModal open={modal} onClose={()=>setModal(false)} />
+    <button className={`celebration-fab ${modal?'is-open':''}`} onClick={()=>{const next=archiveClicks+1;setArchiveClicks(next);if(next===7){setSecret(true);window.setTimeout(()=>setSecret(false),3000);setArchiveClicks(0);}setModal(true);}} aria-label="打开我的庆典收藏夹" data-tooltip="MY ARCHIVE"><Disc3 size={25}/></button><CollectionModal open={modal} onClose={()=>setModal(false)} />
     </div>
   </main>;
 }

@@ -160,7 +160,7 @@ export function PosterMaker({ wish }: { wish: string }) {
     ctx.fillText('FOR A BRIGHT FUTURE', W / 2, 1730);
 
     // —— 下载 ——
-    const link = document.createElement('a'); link.download = 'happy-18th-my-era.png'; link.href = canvas.toDataURL('image/png'); link.click();
+    const link = document.createElement('a'); link.download = 'birthday-celebration-poster.png'; link.href = canvas.toDataURL('image/png'); link.click();
     setSaved(true); window.setTimeout(() => setSaved(false), 2200);
   };
   return <button className={`poster-button ${saved ? 'saved' : ''}`} onClick={download}><Download size={15}/>{saved ? 'POSTER SAVED' : '保存这一夜'}</button>;

@@ -24,6 +24,7 @@ export function ScrollProgress() {
 /** 卡片 3D tilt + 鼠标光影跟随：给所有 .wish-card / .moment-card 绑定 mousemove */
 export function TiltEffect() {
   useEffect(() => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cards = document.querySelectorAll('.wish-card, .moment-card');
     const handlers: Array<{ el: HTMLElement; move: (e: MouseEvent) => void; leave: () => void }> = [];
 
@@ -70,8 +71,8 @@ export function CustomCursor() {
   const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 触摸设备不启用
-    if (window.matchMedia('(pointer: coarse)').matches) return;
+    // 仅在精确指针设备启用，且尊重系统减少动态效果设置。
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const dot = dotRef.current;
     const ring = ringRef.current;

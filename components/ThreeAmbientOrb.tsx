@@ -8,6 +8,7 @@ export function ThreeAmbientOrb() {
   const mount = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 700px)').matches) return;
     const host = mount.current;
     if (!host) return;
     const scene = new THREE.Scene();

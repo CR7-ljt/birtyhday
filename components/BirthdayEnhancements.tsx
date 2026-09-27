@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useInView } from 'framer-motion';
 export function ConstellationCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const canvas = ref.current; if (!canvas) return;
     const ctx = canvas.getContext('2d'); if (!ctx) return;
     let raf = 0, started = 0, active = false;

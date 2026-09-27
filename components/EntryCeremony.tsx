@@ -26,35 +26,38 @@ type EntryStage = 'launch' | 'fireworks' | 'heart' | 'exiting' | 'done';
 
 export function EntryCeremony({ onFinished }: { onFinished: () => void }) {
   const [stage, setStage] = useState<EntryStage>('launch');
+  const timers = useRef<number[]>([]);
+  const finish = () => {
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+    setStage('exiting');
+    onFinished();
+    timers.current.push(window.setTimeout(() => {
+      setStage('done');
+      document.body.style.overflow = '';
+    }, ENTRY_TIMING.heartFade + 60));
+  };
+  const schedule = (callback: () => void, delay: number) => timers.current.push(window.setTimeout(callback, delay));
 
-  // 点击「开始18」：烟花立即开始、启动页同步淡出；
-  // 2s 后出现爱心；爱心停留满 5s 后通知主界面淡入并淡出遮罩；
-  // 再 0.9s 后确定性卸载遮罩层（body 滚动随之自动恢复，见 CSS :has 规则）。
+  useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
+
   const begin = () => {
     if (stage !== 'launch') return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      finish();
+      return;
+    }
     setStage('fireworks');
-    window.setTimeout(() => setStage('heart'), ENTRY_TIMING.fireworks);
-    window.setTimeout(() => {
-      setStage('exiting');
-      onFinished();
-    }, ENTRY_TIMING.fireworks + ENTRY_TIMING.heartHold);
-    window.setTimeout(
-      () => {
-        setStage('done');
-        document.body.style.overflow = ''; // 保险：遮罩卸载同时显式恢复滚动（兼容无 :has 的浏览器）
-      },
-      ENTRY_TIMING.fireworks + ENTRY_TIMING.heartHold + ENTRY_TIMING.heartFade + 60,
-    );
+    schedule(() => setStage('heart'), ENTRY_TIMING.fireworks);
+    schedule(finish, ENTRY_TIMING.fireworks + ENTRY_TIMING.heartHold);
   };
 
   if (stage === 'done') return null;
 
   return (
     <div className={`entry-overlay${stage === 'exiting' ? ' is-exiting' : ''}`} aria-hidden={stage === 'exiting'}>
-      {/* 启动页在烟花期间渐隐消失 */}
-      {(stage === 'launch' || stage === 'fireworks') && (
-        <LaunchScreen leaving={stage === 'fireworks'} onBegin={begin} />
-      )}
+      {(stage === 'launch' || stage === 'fireworks') && <LaunchScreen leaving={stage === 'fireworks'} onBegin={begin} onSkip={finish} />}
       {stage === 'fireworks' && <FireworksStage />}
       {stage === 'heart' && <SiuHeart />}
     </div>
@@ -62,7 +65,7 @@ export function EntryCeremony({ onFinished }: { onFinished: () => void }) {
 }
 
 /* ---------------- 首页启动页 ---------------- */
-function LaunchScreen({ leaving, onBegin }: { leaving: boolean; onBegin: () => void }) {
+function LaunchScreen({ leaving, onBegin, onSkip }: { leaving: boolean; onBegin: () => void; onSkip: () => void }) {
   return (
     <div className={`launch-screen${leaving ? ' is-leaving' : ''}`}>
       <div className="launch-halo" aria-hidden />
@@ -76,6 +79,7 @@ function LaunchScreen({ leaving, onBegin }: { leaving: boolean; onBegin: () => v
         <i className="launch-btn-arrow">↓</i>
       </button>
       <p className="launch-hint">轻触开启，十八岁的第一束烟花</p>
+      <button className="launch-skip" type="button" onClick={onSkip}>跳过仪式</button>
     </div>
   );
 }
