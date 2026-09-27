@@ -1,0 +1,2 @@
+import type { ReactNode } from 'react';
+export function ChartCard({title,subtitle,children}:{title:string;subtitle:string;children:ReactNode}){return <section className="chart-card"><div><h3>{title}</h3><p>{subtitle}</p></div><div className="chart-content">{children}</div></section>}

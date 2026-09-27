@@ -1,0 +1,2 @@
+import Link from 'next/link';import { ArrowUpRight } from 'lucide-react';
+export function DemoCard({number,title,description,href,tags}:{number:string;title:string;description:string;href:string;tags:string[]}){return <Link href={href} className="demo-card"><div className="demo-card-top"><span>实验 {number}</span><ArrowUpRight size={19}/></div><h3>{title}</h3><p>{description}</p><div>{tags.map(tag=><em key={tag}>{tag}</em>)}</div></Link>}

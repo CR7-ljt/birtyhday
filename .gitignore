@@ -1,0 +1,47 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Next.js
+.next
+out
+
+# production
+build
+dist
+
+# cache
+.npm-cache
+.vercel
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env files
+.env
+.env*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# local non-deployment artifacts
+.edge-pdf-profile
+HPC*.html
+HPC*.md
+HPC*.pdf
+convert_markdown_to_html.ps1
+html_to_pdf.py
+markdown_to_readable_pdf.py
+
+.vercel
